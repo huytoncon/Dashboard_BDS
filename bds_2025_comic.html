@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BDS 2025 — COMIC EDITION</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF3B3B;
+            --secondary: #FFD93D;
+            --accent: #2EC4FF;
+            --success: #16A34A;
+            --warning: #D97706;
+            --danger: #DC2626;
+            --surface: #FFFFFF;
+            --outline: #000000;
+            --text: #111827;
+            --halftone: radial-gradient(#000 10%, transparent 11%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--secondary);
+            background-image: var(--halftone);
+            background-size: 15px 15px;
+            color: var(--text);
+            font-family: 'Space Mono', monospace;
+            padding: 20px;
+        }
+
+        h1, h2, h3, .comic-font {
+            font-family: 'Bangers', cursive;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* ── PANELS ── */
+        .panel {
+            background: var(--surface);
+            border: 4px solid var(--outline);
+            box-shadow: 8px 8px 0px var(--outline);
+            padding: 24px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ── HEADER ── */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--primary);
+            color: white;
+            padding: 20px 40px;
+            border: 4px solid var(--outline);
+            box-shadow: 10px 10px 0px var(--outline);
+            margin-bottom: 40px;
+            transform: rotate(-1deg);
+        }
+
+        .brand-text h1 {
+            font-size: 32px;
+            -webkit-text-stroke: 1px var(--outline);
+        }
+
+        /* ── NAV ── */
+        .tab-nav {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: var(--surface);
+            border: 3px solid var(--outline);
+            padding: 12px 24px;
+            font-family: 'Bangers', cursive;
+            font-size: 18px;
+            cursor: pointer;
+            transition: 0.1s;
+            box-shadow: 4px 4px 0px var(--outline);
+        }
+
+        .tab-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px var(--outline);
+            background: var(--accent);
+        }
+
+        .tab-btn.active {
+            background: var(--secondary);
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0px var(--outline);
+        }
+
+        /* ── KPI CARDS ── */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            border: 4px solid var(--outline);
+            padding: 20px;
+            text-align: center;
+            transform: rotate(calc(var(--r, 0) * 1deg));
+        }
+
+        .kpi-card:nth-child(odd) { --r: 1; }
+        .kpi-card:nth-child(even) { --r: -1; }
+
+        .kpi-label {
+            display: inline-block;
+            background: var(--outline);
+            color: white;
+            padding: 4px 12px;
+            font-family: 'Bangers', cursive;
+            margin-bottom: 16px;
+            clip-path: polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%);
+        }
+
+        .kpi-value {
+            font-size: 36px;
+            font-family: 'Bangers', cursive;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        /* ── CHARTS ── */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 900px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+
+        .chart-panel {
+            background: var(--surface);
+            border: 4px solid var(--outline);
+            padding: 24px;
+            box-shadow: 12px 12px 0px rgba(0,0,0,0.1);
+        }
+
+        .chart-title {
+            background: var(--accent);
+            border: 3px solid var(--outline);
+            display: inline-block;
+            padding: 8px 16px;
+            margin-bottom: 24px;
+            font-size: 18px;
+            transform: skew(-10deg);
+        }
+
+        .chart-container {
+            height: 350px;
+            position: relative;
+        }
+
+        /* ── TABLES ── */
+        .table-panel {
+            background: var(--surface);
+            border: 4px solid var(--outline);
+            padding: 0;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--outline);
+            color: white;
+            padding: 16px;
+            text-align: left;
+            font-family: 'Bangers', cursive;
+            font-size: 18px;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 2px solid var(--outline);
+            font-weight: 700;
+        }
+
+        tr:nth-child(even) { background: #f9f9f9; }
+
+        /* ── SPEECH BUBBLE ── */
+        .bubble {
+            position: relative;
+            background: var(--surface);
+            border: 3px solid var(--outline);
+            padding: 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+
+        .bubble::after {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 15px solid var(--outline);
+        }
+
+        /* ── FOOTER ── */
+        .footer {
+            text-align: center;
+            padding: 40px;
+            background: var(--outline);
+            color: white;
+            font-family: 'Bangers', cursive;
+            font-size: 20px;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="brand-text">
+            <h1>POW! BDS 2025 DASHBOARD</h1>
+        </div>
+        <div style="font-family:'Bangers'; font-size:20px;">EDITION #01</div>
+    </header>
+
+    <nav class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('overview')">MISSION: OVERVIEW</button>
+        <button class="tab-btn" onclick="switchTab('inventory')">STASH: INVENTORY</button>
+        <button class="tab-btn" onclick="switchTab('pricing')">VALUE: PRICING</button>
+        <button class="tab-btn" onclick="switchTab('sales')">HEROES: SALES</button>
+    </nav>
+
+    <main id="main-content">
+        
+        <!-- PAGE: OVERVIEW -->
+        <div id="page-overview" class="page" style="display:block;">
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-label">TOTAL REVENUE</div>
+                    <div class="kpi-value" id="kpi-revenue">0</div>
+                    <div class="bubble">BOOM! OVER TARGET!</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">DEALS CLOSED</div>
+                    <div class="kpi-value" id="kpi-deals">0</div>
+                    <div class="bubble">KAPOW! NEW RECORD!</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">AVG PRICE</div>
+                    <div class="kpi-value" id="kpi-avg-deal">0</div>
+                    <div class="bubble">STEADY AS A ROCK!</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">SUCCESS RATE</div>
+                    <div class="kpi-value">78%</div>
+                    <div class="bubble">UNSTOPPABLE!</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="chart-panel">
+                    <div class="chart-title">REVENUE ADVENTURE</div>
+                    <div class="chart-container"><canvas id="revenueTrendChart"></canvas></div>
+                </div>
+                <div class="chart-panel">
+                    <div class="chart-title">THE PROPERTY SQUAD</div>
+                    <div class="chart-container"><canvas id="propertyTypeChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="chart-panel">
+                    <div class="chart-title">THE REALM MAP</div>
+                    <div class="chart-container"><canvas id="provinceRevenueChart"></canvas></div>
+                </div>
+                <div class="chart-panel">
+                    <div class="chart-title">TOP SECRET PROJECTS</div>
+                    <div class="chart-container"><canvas id="projectRevenueChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE: INVENTORY -->
+        <div id="page-inventory" class="page" style="display:none;">
+            <div class="grid-2">
+                <div class="chart-panel">
+                    <div class="chart-title">WAREHOUSE STATUS</div>
+                    <div class="chart-container"><canvas id="inventoryStatusChart"></canvas></div>
+                </div>
+                <div class="chart-panel">
+                    <div class="chart-title">DELIVERY TIMELINE</div>
+                    <div class="chart-container"><canvas id="deliveryPlanChart"></canvas></div>
+                </div>
+            </div>
+            <div class="table-panel">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>PROJECT</th>
+                            <th>TYPE</th>
+                            <th>TOTAL</th>
+                            <th>SOLD</th>
+                            <th>PROGRESS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PAGE: PRICING -->
+        <div id="page-pricing" class="page" style="display:none;">
+            <div class="grid-2">
+                <div class="chart-panel">
+                    <div class="chart-title">PRICE POWER BY TYPE</div>
+                    <div class="chart-container"><canvas id="priceTypeChart"></canvas></div>
+                </div>
+                <div class="chart-panel">
+                    <div class="chart-title">MARKET FLUCTUATION</div>
+                    <div class="chart-container"><canvas id="priceTrendChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE: SALES -->
+        <div id="page-sales" class="page" style="display:none;">
+            <div class="grid-2">
+                <div class="chart-panel">
+                    <div class="chart-title">TOP HEROES (REV)</div>
+                    <div class="chart-container"><canvas id="salesRevenueChart"></canvas></div>
+                </div>
+                <div class="chart-panel">
+                    <div class="chart-title">LOOT DISTRIBUTION</div>
+                    <div class="chart-container"><canvas id="commissionRoleChart"></canvas></div>
+                </div>
+            </div>
+            <div class="table-panel">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>HERO</th>
+                            <th>CLASS</th>
+                            <th>QUESTS</th>
+                            <th>GOLD (TY)</th>
+                            <th>POWER</th>
+                        </tr>
+                    </thead>
+                    <tbody id="salesTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="footer">
+        TO BE CONTINUED... © 2026 PHUC AN COMICS
+    </footer>
+
+    <script src="dashboard_data_2025.js"></script>
+    <script>
+        let currentCharts = {};
+        const COMIC_COLORS = {
+            primary: '#FF3B3B',
+            secondary: '#FFD93D',
+            accent: '#2EC4FF',
+            outline: '#000000',
+            text: '#111827'
+        };
+
+        Chart.defaults.font.family = "'Space Mono', monospace";
+        Chart.defaults.font.weight = 'bold';
+        Chart.defaults.color = '#000000';
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('vi-VN').format(num);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('page-' + tabId).style.display = 'block';
+            
+            // Find active button
+            const btns = document.querySelectorAll('.tab-btn');
+            btns.forEach(btn => {
+                if(btn.textContent.toLowerCase().includes(tabId)) btn.classList.add('active');
+            });
+
+            initCharts();
+        }
+
+        function initDashboard() {
+            let data;
+            try { data = DASHBOARD_DATA; } catch(e) { data = window.DASHBOARD_DATA; }
+            if (!data) return;
+
+            document.getElementById('kpi-revenue').textContent = formatNumber(data.summary.totalRevenue) + 'T';
+            document.getElementById('kpi-deals').textContent = formatNumber(data.summary.totalTransactions);
+            document.getElementById('kpi-avg-deal').textContent = data.summary.avgValue.toFixed(1) + 'T';
+
+            renderTables(data);
+            initCharts();
+        }
+
+        function renderTables(data) {
+            if (data.productData) {
+                document.getElementById('inventoryTableBody').innerHTML = data.productData.slice(0, 10).map(p => `
+                    <tr>
+                        <td class="comic-font" style="color:var(--primary)">${p.project}</td>
+                        <td>${p.type}</td>
+                        <td>${p.total}</td>
+                        <td>${p.sold}</td>
+                        <td>
+                            <div style="height:10px; background:#eee; border:2px solid #000;">
+                                <div style="height:100%; width:${(p.sold/p.total)*100}%; background:var(--accent);"></div>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            if (data.salesPerformance) {
+                document.getElementById('salesTableBody').innerHTML = data.salesPerformance.slice(0, 10).map(s => `
+                    <tr>
+                        <td class="comic-font" style="color:var(--accent)">${s.HoTen}</td>
+                        <td>${s.ChucVu}</td>
+                        <td>${s.Deals}</td>
+                        <td>${s.RevenueTyVND}</td>
+                        <td>
+                            <div style="height:10px; background:#eee; border:2px solid #000;">
+                                <div style="height:100%; width:${Math.min(100, (s.RevenueTyVND/20)*100)}%; background:var(--primary);"></div>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function initCharts() {
+            let data;
+            try { data = DASHBOARD_DATA; } catch(e) { data = window.DASHBOARD_DATA; }
+            if (!data) return;
+
+            Object.values(currentCharts).forEach(c => { if(c) c.destroy(); });
+
+            const safeGetCtx = (id) => {
+                const el = document.getElementById(id);
+                return (el && el.offsetParent !== null) ? el.getContext('2d') : null;
+            };
+
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { font: { family: "'Space Mono'", weight: 'bold' } } }
+                },
+                scales: {
+                    x: { grid: { color: '#000', lineWidth: 1 }, border: { width: 3, color: '#000' } },
+                    y: { grid: { color: '#000', lineWidth: 1 }, border: { width: 3, color: '#000' } }
+                }
+            };
+
+            // Revenue
+            const ctxRev = safeGetCtx('revenueTrendChart');
+            if (ctxRev) {
+                currentCharts.rev = new Chart(ctxRev, {
+                    type: 'line',
+                    data: {
+                        labels: data.monthlyRevenue.map(m => m.NamThang),
+                        datasets: [{
+                            label: 'GOLD',
+                            data: data.monthlyRevenue.map(m => m.DoanhThuGhiNhanTyDong),
+                            borderColor: '#000',
+                            backgroundColor: COMIC_COLORS.primary,
+                            borderWidth: 4,
+                            pointRadius: 6,
+                            fill: true,
+                            tension: 0
+                        }]
+                    },
+                    options: chartOptions
+                });
+            }
+
+            // Type
+            const ctxType = safeGetCtx('propertyTypeChart');
+            if (ctxType) {
+                const sums = {};
+                data.typeRevenue.forEach(t => sums[t.LoaiBDS] = (sums[t.LoaiBDS] || 0) + t.DoanhThuGhiNhanTyDong);
+                currentCharts.type = new Chart(ctxType, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(sums),
+                        datasets: [{
+                            data: Object.values(sums),
+                            backgroundColor: [COMIC_COLORS.primary, COMIC_COLORS.secondary, COMIC_COLORS.accent, '#16A34A', '#D97706'],
+                            borderColor: '#000',
+                            borderWidth: 3
+                        }]
+                    },
+                    options: chartOptions
+                });
+            }
+
+            // Province
+            const ctxProv = safeGetCtx('provinceRevenueChart');
+            if (ctxProv) {
+                const provSums = {};
+                data.provinceRevenue.forEach(p => provSums[p.TinhThanh] = (provSums[p.TinhThanh] || 0) + p.DoanhThuGhiNhanTyDong);
+                currentCharts.prov = new Chart(ctxProv, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(provSums),
+                        datasets: [{
+                            label: 'TY',
+                            data: Object.values(provSums),
+                            backgroundColor: COMIC_COLORS.accent,
+                            borderColor: '#000',
+                            borderWidth: 3
+                        }]
+                    },
+                    options: { ...chartOptions, indexAxis: 'y' }
+                });
+            }
+
+            // Project
+            const ctxProj = safeGetCtx('projectRevenueChart');
+            if (ctxProj) {
+                const projSums = {};
+                data.projectRevenue.forEach(p => projSums[p.TenDuAn] = (projSums[p.TenDuAn] || 0) + p.DoanhThuGhiNhanTyDong);
+                const sorted = Object.entries(projSums).sort((a,b) => b[1] - a[1]).slice(0, 8);
+                currentCharts.proj = new Chart(ctxProj, {
+                    type: 'bar',
+                    data: {
+                        labels: sorted.map(x => x[0]),
+                        datasets: [{
+                            data: sorted.map(x => x[1]),
+                            backgroundColor: COMIC_COLORS.secondary,
+                            borderColor: '#000',
+                            borderWidth: 3
+                        }]
+                    },
+                    options: chartOptions
+                });
+            }
+
+            // Inventory
+            const ctxInv = safeGetCtx('inventoryStatusChart');
+            if (ctxInv) {
+                const status = {
+                    'DONE': data.productData.reduce((s, p) => s + p.delivered, 0),
+                    'WORK': data.productData.reduce((s, p) => s + p.construction, 0),
+                    'WAIT': data.productData.reduce((s, p) => s + p.pending, 0)
+                };
+                currentCharts.inv = new Chart(ctxInv, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(status),
+                        datasets: [{
+                            data: Object.values(status),
+                            backgroundColor: ['#16A34A', COMIC_COLORS.accent, COMIC_COLORS.primary],
+                            borderColor: '#000',
+                            borderWidth: 3
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            // Sales Rev
+            const ctxSales = safeGetCtx('salesRevenueChart');
+            if (ctxSales) {
+                const topSales = data.salesPerformance.slice(0, 8);
+                currentCharts.sales = new Chart(ctxSales, {
+                    type: 'bar',
+                    data: {
+                        labels: topSales.map(s => s.HoTen),
+                        datasets: [{
+                            label: 'TY',
+                            data: topSales.map(s => s.RevenueTyVND),
+                            backgroundColor: COMIC_COLORS.primary,
+                            borderColor: '#000',
+                            borderWidth: 3
+                        }]
+                    },
+                    options: { ...chartOptions, indexAxis: 'y' }
+                });
+            }
+        }
+
+        window.onload = initDashboard;
+    </script>
+</body>
+</html>
