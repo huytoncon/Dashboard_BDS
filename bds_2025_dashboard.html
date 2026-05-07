@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BatDongSan 2025 — Analytics Intelligence Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --canvas: #ffffff;
+            --surface-soft: #f1f4f7;
+            --ink-deep: #0a1317;
+            --ink: #1c1e21;
+            --charcoal: #444950;
+            --slate: #4b4c4f;
+            --steel: #5d6c7b;
+            --hairline: #ced0d4;
+            --hairline-soft: #dee3e9;
+            --primary: #0064e0;
+            --primary-deep: #0457cb;
+            --fb-blue: #1876f2;
+            --oculus-purple: #a121ce;
+            --success: #31a24c;
+            --success-bg: rgba(49, 162, 76, 0.15);
+            --attention: #f2a918;
+            --warning: #f7b928;
+            --warning-bg: rgba(247, 185, 40, 0.15);
+            --critical: #e41e3f;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--canvas);
+            color: var(--ink);
+            font-family: 'Optimistic VF', 'Outfit', -apple-system, sans-serif;
+            overflow-x: hidden;
+            line-height: 1.5;
+            letter-spacing: -0.14px;
+        }
+
+        /* ── ANIMATIONS ── */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeIn 0.4s ease forwards; }
+
+        /* ── HEADER ── */
+        .header {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            background: var(--canvas);
+            border-bottom: 1px solid var(--hairline-soft);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            width: 32px;
+            height: 32px;
+            background: var(--ink-deep);
+            border-radius: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--canvas);
+            font-size: 14px;
+        }
+
+        .brand-text h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--ink-deep);
+            letter-spacing: -0.16px;
+        }
+
+        .brand-text p {
+            display: none; /* Hide subtitle for cleaner look */
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .time-badge {
+            background: var(--surface-soft);
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 12px;
+            color: var(--steel);
+            font-weight: 700;
+        }
+
+        select#timeFilter {
+            background: var(--canvas);
+            color: var(--ink-deep);
+            border: 1px solid var(--hairline);
+            padding: 8px 16px;
+            border-radius: 100px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: inherit;
+        }
+        
+        select#timeFilter:focus {
+            border: 2px solid var(--fb-blue);
+            outline: none;
+        }
+
+        /* ── NAV ── */
+        .tab-nav {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px 40px;
+            background: var(--canvas);
+            border-bottom: 1px solid var(--hairline-soft);
+        }
+
+        .tab-btn {
+            background: var(--canvas);
+            border: 1px solid var(--hairline);
+            color: var(--ink);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 100px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            background: var(--surface-soft);
+        }
+
+        .tab-btn.active {
+            color: var(--canvas);
+            background: var(--ink-deep);
+            border-color: var(--ink-deep);
+        }
+
+        /* ── MAIN CONTENT ── */
+        .main {
+            padding: 48px 40px;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.4s ease-out; }
+
+        /* ── KPI CARDS ── */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .kpi-card {
+            background: var(--canvas);
+            border: 1px solid var(--hairline-soft);
+            border-radius: 24px;
+            padding: 32px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .kpi-card:hover {
+            border-color: var(--hairline);
+        }
+
+        .kpi-label {
+            font-size: 14px;
+            color: var(--slate);
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        .kpi-value {
+            font-size: 36px;
+            font-weight: 500;
+            color: var(--ink-deep);
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .kpi-value span {
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--steel);
+        }
+
+        .kpi-trend {
+            margin-top: 12px;
+            font-size: 14px;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .trend-up { color: var(--success); font-weight: 700; }
+        .trend-down { color: var(--critical); font-weight: 700; }
+
+        /* ── CHARTS ── */
+        .grid-main, .grid-equal, .grid-3 {
+            display: grid;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        .grid-main { grid-template-columns: 2fr 1fr; }
+        .grid-equal { grid-template-columns: 1fr 1fr; }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+
+        .chart-box {
+            background: var(--canvas);
+            border: 1px solid var(--hairline-soft);
+            border-radius: 32px;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            min-height: 400px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .chart-title {
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--ink-deep);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chart-title i { font-style: normal; font-size: 24px; }
+
+        .chart-container {
+            flex-grow: 1;
+            position: relative;
+        }
+
+        /* ── TABLES ── */
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid var(--hairline-soft);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            background: var(--canvas);
+        }
+
+        th {
+            background: var(--surface-soft);
+            text-align: left;
+            padding: 16px 20px;
+            color: var(--ink);
+            font-size: 14px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--hairline-soft);
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--hairline-soft);
+            color: var(--charcoal);
+        }
+
+        tr:hover td {
+            background: var(--surface-soft);
+        }
+
+        .mono { font-family: inherit; font-weight: 400; color: var(--ink); }
+
+        .status-pill {
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .sp-sale { background: var(--success-bg); color: var(--success); }
+        .sp-done { background: var(--surface-soft); color: var(--steel); }
+        .sp-wait { background: var(--warning-bg); color: var(--ink-deep); }
+
+        /* ── PROGRESS ── */
+        .progress-group { margin-bottom: 20px; }
+        .progress-info { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+        .progress-track { height: 8px; background: var(--surface-soft); border-radius: 100px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary); border-radius: 100px; transition: width 1s ease; }
+
+        /* ── FOOTER ── */
+        .footer {
+            text-align: center;
+            padding: 64px 40px;
+            color: var(--steel);
+            font-size: 12px;
+            border-top: 1px solid var(--hairline-soft);
+            margin-top: 64px;
+            background: var(--canvas);
+        }
+
+        /* ── CUSTOM SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--canvas); }
+        ::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 100px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--steel); }
+
+        /* ── TOOLTIP ── */
+        .chart-tooltip {
+            background: var(--canvas) !important;
+            border: 1px solid var(--hairline-soft) !important;
+            border-radius: 8px !important;
+            padding: 10px !important;
+            box-shadow: rgba(20, 22, 26, 0.3) 0px 1px 4px 0px !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header">
+        <div class="brand">
+            <div class="logo">BDS</div>
+            <div class="brand-text">
+                <h1>REAL ESTATE ANALYTICS 2025</h1>
+                <p>Intelligence Platform — Phuc An Land</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <div class="time-badge">Dữ liệu cập nhật: <span id="currentDate">03/05/2026</span></div>
+            <select id="timeFilter" onchange="updateDashboard()">
+                <option value="all">Toàn thời gian</option>
+            </select>
+        </div>
+    </header>
+    <nav class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('overview')">📊 Overview & Performance</button>
+        <button class="tab-btn" onclick="switchTab('inventory')">🏗️ Inventory & Production</button>
+        <button class="tab-btn" onclick="switchTab('pricing')">💎 Pricing & Valuation</button>
+        <button class="tab-btn" onclick="switchTab('sales')">👥 Sales Performance</button>
+    </nav>
+
+    <main class="main">
+        
+        <!-- PAGE: SALES PERFORMANCE -->
+        <div id="page-sales" class="page">
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-label">Top Doanh Thu Sales</div>
+                    <div class="kpi-value" id="top-sales-name" style="font-size:20px;">—</div>
+                    <div class="kpi-trend" id="top-sales-val">0 tỷ</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Tổng Hoa Hồng Chi Trả</div>
+                    <div class="kpi-value" id="total-commission">0<span>tr</span></div>
+                    <div class="kpi-trend">Hệ thống ghi nhận</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Sales Xuất Sắc</div>
+                    <div class="kpi-value" id="excellent-sales-count">0</div>
+                    <div class="kpi-trend">> 5 tỷ doanh thu</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Hiệu Suất Team</div>
+                    <div class="kpi-value">92<span>%</span></div>
+                    <div class="kpi-trend trend-up">↑ 2.4% tháng này</div>
+                </div>
+            </div>
+
+            <div class="grid-main">
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <div class="chart-title"><i>🥇</i> Top 10 Sales theo Doanh thu (tỷ)</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="salesRevenueChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <div class="chart-title"><i>💰</i> Tỷ trọng Hoa hồng theo Chức vụ</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="commissionRoleChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-box" style="min-height: auto;">
+                <div class="chart-header">
+                    <div class="chart-title"><i>📋</i> Bảng xếp hạng Hiệu suất Nhân viên</div>
+                </div>
+                <div class="table-wrap">
+                    <table id="salesTable">
+                        <thead>
+                            <tr>
+                                <th>Nhân Viên</th>
+                                <th>Chức Vụ</th>
+                                <th>Số Giao Dịch</th>
+                                <th>Doanh Thu (tỷ)</th>
+                                <th>Hoa Hồng (tr)</th>
+                                <th>Hiệu Suất</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PAGE: OVERVIEW -->
+        <div id="page-overview" class="page active">
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-label">Tổng Doanh Thu</div>
+                    <div class="kpi-value" id="kpi-revenue">0<span>tỷ</span></div>
+                    <div class="kpi-trend trend-up">↑ 12.5% vs target</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Số Lượng Giao Dịch</div>
+                    <div class="kpi-value" id="kpi-deals">0</div>
+                    <div class="kpi-trend trend-up">↑ 8.2% vs dự kiến</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Giá Trị Trung Bình</div>
+                    <div class="kpi-value" id="kpi-avg-deal">0<span>tỷ</span></div>
+                    <div class="kpi-trend">Duy trì ổn định</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Tỷ Lệ Chốt Sale</div>
+                    <div class="kpi-value" id="kpi-conversion">78<span>%</span></div>
+                    <div class="kpi-trend trend-up">↑ 4.1% tháng này</div>
+                </div>
+            </div>
+
+            <div class="grid-main">
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <div class="chart-title"><i>📈</i> Xu hướng Doanh thu vs KPI hàng tháng</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="revenueTrendChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <div class="chart-title"><i>🏢</i> Cơ cấu Doanh thu theo Loại hình</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="propertyTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-equal">
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <div class="chart-title"><i>🗺️</i> Phân bổ theo Tỉnh thành</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="provinceRevenueChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <div class="chart-title"><i>🏷️</i> Doanh thu theo Dự án tiêu biểu</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="projectRevenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE: INVENTORY -->
+        <div id="page-inventory" class="page">
+            <div class="grid-3">
+                <div class="chart-box" style="min-height: 300px;">
+                    <div class="chart-header">
+                        <div class="chart-title"><i>📦</i> Trạng thái Hàng tồn</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="inventoryStatusChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-box" style="min-height: 300px;">
+                    <div class="chart-header">
+                        <div class="chart-title"><i>🏗️</i> Tiến độ Thi công bình quân</div>
+                    </div>
+                    <div class="chart-container" style="display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                        <div style="font-size:48px; font-weight:800; color:var(--ink-deep);">84%</div>
+                        <div style="color:var(--steel); text-transform:uppercase; font-size:12px; letter-spacing:2px;">On Schedule</div>
+                    </div>
+                </div>
+                <div class="chart-box" style="min-height: 300px;">
+                    <div class="chart-header">
+                        <div class="chart-title"><i>📅</i> Kế hoạch Bàn giao 2025</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="deliveryPlanChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-box" style="min-height: auto;">
+                <div class="chart-header">
+                    <div class="chart-title"><i>📋</i> Danh sách Chi tiết Sản xuất & Kho hàng</div>
+                </div>
+                <div class="table-wrap">
+                    <table id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>Tên Dự Án</th>
+                                <th>Loại Hình</th>
+                                <th>Khu Vực</th>
+                                <th>Tổng SP</th>
+                                <th>Đã Bán</th>
+                                <th>Tiến Độ</th>
+                                <th>Trạng Thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE: PRICING -->
+        <div id="page-pricing" class="page">
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-label">Giá Trung Bình</div>
+                    <div class="kpi-value" id="pr-avg">0<span>tr/m²</span></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Biến Động Giá (YoY)</div>
+                    <div class="kpi-value" style="color:var(--green);">+14.2<span>%</span></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Vùng Giá Cao Nhất</div>
+                    <div class="kpi-value" style="font-size:18px;">TP. Hồ Chí Minh</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Dự kiến Lợi nhuận</div>
+                    <div class="kpi-value" id="pr-profit">22<span>%</span></div>
+                </div>
+            </div>
+
+            <div class="grid-main">
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <div class="chart-title"><i>📊</i> So sánh Giá theo Loại hình BDS</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="priceTypeChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <div class="chart-title"><i>📈</i> Diễn biến Giá thị trường</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="priceTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-box">
+                <div class="chart-header">
+                    <div class="chart-title"><i>💎</i> Phân tích Định giá Dự án</div>
+                </div>
+                <div class="table-wrap">
+                    <table id="pricingTable">
+                        <thead>
+                            <tr>
+                                <th>Dự Án</th>
+                                <th>Loại</th>
+                                <th>Giá TB (tr/m²)</th>
+                                <th>Min - Max</th>
+                                <th>Diện Tích TB</th>
+                                <th>Giá Trị TB</th>
+                                <th>Tăng Trưởng</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pricingTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="footer">
+        &copy; 2026 Phuc An Land Intelligence System. Powered by Antigravity AI.
+        <br><br>
+        Dữ liệu được xử lý từ bộ dataset BatDongSan_2025_FakeData.xlsx
+    </footer>
+
+    <script src="dashboard_data_2025.js"></script>
+    <script>
+        let currentCharts = {};
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('vi-VN').format(num);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById('page-' + tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+            
+            // Re-render charts for specific page to fix animation/sizing
+            initCharts();
+        }
+
+        function initDashboard() {
+            // Update Summary
+            const totalRev = DASHBOARD_DATA.summary.totalRevenue;
+            const totalKPI = DASHBOARD_DATA.summary.totalKPI || (1000 * 12);
+            const perfPct = ((totalRev / totalKPI) * 100).toFixed(1);
+            
+            document.getElementById('kpi-revenue').innerHTML = `${formatNumber(totalRev)}<span>tỷ</span>`;
+            
+            const revTrendEl = document.querySelector('#page-overview .kpi-card:nth-child(1) .kpi-trend');
+            if (revTrendEl) {
+                const diff = (totalRev - totalKPI);
+                revTrendEl.className = `kpi-trend ${diff >= 0 ? 'trend-up' : 'trend-down'}`;
+                revTrendEl.innerHTML = `${diff >= 0 ? '↑' : '↓'} ${perfPct}% vs target`;
+            }
+
+            document.getElementById('kpi-deals').textContent = formatNumber(DASHBOARD_DATA.summary.totalTransactions);
+            document.getElementById('kpi-avg-deal').innerHTML = `${DASHBOARD_DATA.summary.avgValue.toFixed(1)}<span>tỷ</span>`;
+            
+            if (DASHBOARD_DATA.monthlyTrend.length > 0) {
+                document.getElementById('pr-avg').innerHTML = `${DASHBOARD_DATA.monthlyTrend[DASHBOARD_DATA.monthlyTrend.length-1].AvgPrice}<span>tr/m²</span>`;
+            }
+
+            // Sales Summary
+            if (DASHBOARD_DATA.salesPerformance.length > 0) {
+                const top = DASHBOARD_DATA.salesPerformance[0];
+                document.getElementById('top-sales-name').textContent = top.HoTen;
+                document.getElementById('top-sales-val').textContent = top.RevenueTyVND + ' tỷ';
+                
+                const totalComm = DASHBOARD_DATA.salesPerformance.reduce((s, p) => s + p.CommissionTrieuVND, 0);
+                document.getElementById('total-commission').innerHTML = `${formatNumber(Math.round(totalComm))}<span>tr</span>`;
+                
+                const excellent = DASHBOARD_DATA.salesPerformance.filter(s => s.RevenueTyVND > 5).length;
+                document.getElementById('excellent-sales-count').textContent = excellent;
+            }
+
+            // Populate Tables
+            renderTables();
+            
+            // Initialize Charts
+            initCharts();
+        }
+
+        function renderTables() {
+            // Inventory Table
+            const invBody = document.getElementById('inventoryTableBody');
+            invBody.innerHTML = DASHBOARD_DATA.productData.map(p => `
+                <tr>
+                    <td><strong>${p.project}</strong></td>
+                    <td>${p.type}</td>
+                    <td>${p.province}</td>
+                    <td class="mono">${p.total}</td>
+                    <td class="mono">${p.sold}</td>
+                    <td>
+                        <div class="progress-track">
+                            <div class="progress-fill" style="width: ${p.total > 0 ? Math.round((p.delivered/p.total)*100) : 0}%"></div>
+                        </div>
+                        <div style="font-size:10px; color:var(--text-dim); margin-top:4px;">Bàn giao: ${p.total > 0 ? Math.round((p.delivered/p.total)*100) : 0}%</div>
+                    </td>
+                    <td><span class="status-pill ${p.sold > p.total*0.8 ? 'sp-sale' : 'sp-wait'}">${p.sold > p.total*0.8 ? 'HOT' : 'OPEN'}</span></td>
+                </tr>
+            `).join('');
+
+            // Pricing Table
+            const priceBody = document.getElementById('pricingTableBody');
+            priceBody.innerHTML = DASHBOARD_DATA.pricingData.map(p => `
+                <tr>
+                    <td><strong>${p.project}</strong></td>
+                    <td>${p.type}</td>
+                    <td class="mono">${p.avgPrice}</td>
+                    <td class="mono" style="font-size:12px;">${p.minPrice} - ${p.maxPrice}</td>
+                    <td>${p.avgArea} m²</td>
+                    <td class="mono">${p.avgValue} tỷ</td>
+                    <td style="color:var(--green); font-weight:700;">+${p.growth}%</td>
+                </tr>
+            `).join('');
+
+            // Sales Table
+            const salesBody = document.getElementById('salesTableBody');
+            salesBody.innerHTML = DASHBOARD_DATA.salesPerformance.map(s => `
+                <tr>
+                    <td><strong>${s.HoTen}</strong></td>
+                    <td>${s.ChucVu}</td>
+                    <td class="mono">${s.Deals}</td>
+                    <td class="mono">${s.RevenueTyVND}</td>
+                    <td class="mono">${formatNumber(s.CommissionTrieuVND)}</td>
+                    <td>
+                        <div class="progress-track">
+                            <div class="progress-fill" style="width: ${Math.min(100, (s.RevenueTyVND/20)*100)}%"></div>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function initCharts() {
+            // Destroy existing charts if any to prevent memory leaks and overlay issues
+            Object.values(currentCharts).forEach(c => { if(c) c.destroy(); });
+
+            const safeGetCtx = (id) => {
+                const el = document.getElementById(id);
+                return el ? el.getContext('2d') : null;
+            };
+
+            // 1. Revenue Trend Chart
+            const ctx1 = safeGetCtx('revenueTrendChart');
+            if (ctx1) {
+                currentCharts.revTrend = new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels: DASHBOARD_DATA.monthlyRevenue.map(m => m.NamThang),
+                        datasets: [
+                            {
+                                label: 'Thực tế (tỷ)',
+                                data: DASHBOARD_DATA.monthlyRevenue.map(m => m.DoanhThuGhiNhanTyDong),
+                                borderColor: '#0064e0',
+                                backgroundColor: 'rgba(0, 100, 224, 0.15)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 3,
+                                pointRadius: 4,
+                                pointBackgroundColor: '#0064e0'
+                            },
+                            {
+                                label: 'KPI (tỷ)',
+                                data: DASHBOARD_DATA.monthlyRevenue.map(m => m.KPI),
+                                borderColor: '#dee3e9',
+                                borderDash: [5, 5],
+                                fill: false,
+                                tension: 0.4,
+                                borderWidth: 2,
+                                pointRadius: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#5d6c7b', font: { family: 'Optimistic VF' } } } },
+                        scales: {
+                            y: { grid: { color: '#dee3e9' }, ticks: { color: '#5d6c7b' } },
+                            x: { grid: { display: false }, ticks: { color: '#5d6c7b' } }
+                        }
+                    }
+                });
+            }
+
+            // 2. Property Type Chart
+            const ctx2 = safeGetCtx('propertyTypeChart');
+            if (ctx2) {
+                const typeSums = {};
+                DASHBOARD_DATA.typeRevenue.forEach(t => {
+                    typeSums[t.LoaiBDS] = (typeSums[t.LoaiBDS] || 0) + t.DoanhThuGhiNhanTyDong;
+                });
+                currentCharts.typeChart = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(typeSums),
+                        datasets: [{
+                            data: Object.values(typeSums),
+                            backgroundColor: ['#0064e0', '#1876f2', '#0457cb', '#a121ce', '#f7b928'],
+                            borderWidth: 0,
+                            hoverOffset: 20
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: { legend: { position: 'bottom', labels: { color: '#5d6c7b', padding: 20 } } }
+                    }
+                });
+            }
+
+            // 3. Province Chart
+            const ctx3 = safeGetCtx('provinceRevenueChart');
+            if (ctx3) {
+                const provSums = {};
+                DASHBOARD_DATA.provinceRevenue.forEach(p => {
+                    provSums[p.TinhThanh] = (provSums[p.TinhThanh] || 0) + p.DoanhThuGhiNhanTyDong;
+                });
+                currentCharts.provChart = new Chart(ctx3, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(provSums),
+                        datasets: [{
+                            label: 'Doanh thu (tỷ)',
+                            data: Object.values(provSums),
+                            backgroundColor: '#0064e0',
+                            borderRadius: 100
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { color: '#dee3e9' }, ticks: { color: '#5d6c7b' } },
+                            y: { grid: { display: false }, ticks: { color: '#5d6c7b' } }
+                        }
+                    }
+                });
+            }
+
+            // 4. Inventory Status
+            const ctx4 = safeGetCtx('inventoryStatusChart');
+            if (ctx4) {
+                const statusData = {
+                    'Đã bàn giao': DASHBOARD_DATA.productData.reduce((s, p) => s + p.delivered, 0),
+                    'Đang thi công': DASHBOARD_DATA.productData.reduce((s, p) => s + p.construction, 0),
+                    'Chờ xử lý': DASHBOARD_DATA.productData.reduce((s, p) => s + p.pending, 0)
+                };
+                currentCharts.invChart = new Chart(ctx4, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(statusData),
+                        datasets: [{
+                            data: Object.values(statusData),
+                            backgroundColor: ['#31a24c', '#0064e0', '#f7b928'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { color: '#5d6c7b' } } }
+                    }
+                });
+            }
+
+            // 5. Price Trend
+            const ctx5 = safeGetCtx('priceTrendChart');
+            if (ctx5) {
+                currentCharts.priceTrend = new Chart(ctx5, {
+                    type: 'line',
+                    data: {
+                        labels: DASHBOARD_DATA.monthlyTrend.map(t => t.NamThang),
+                        datasets: [{
+                            label: 'Giá trung bình (tr/m²)',
+                            data: DASHBOARD_DATA.monthlyTrend.map(t => t.AvgPrice),
+                            borderColor: '#1876f2',
+                            backgroundColor: 'rgba(24, 118, 242, 0.15)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { grid: { color: '#dee3e9' }, ticks: { color: '#5d6c7b' } },
+                            x: { grid: { display: false }, ticks: { color: '#5d6c7b' } }
+                        }
+                    }
+                });
+            }
+
+            // 6. Project Revenue
+            const ctx6 = safeGetCtx('projectRevenueChart');
+            if (ctx6) {
+                const projSums = {};
+                DASHBOARD_DATA.projectRevenue.forEach(p => {
+                    projSums[p.TenDuAn] = (projSums[p.TenDuAn] || 0) + p.DoanhThuGhiNhanTyDong;
+                });
+                const sortedProj = Object.entries(projSums).sort((a,b) => b[1] - a[1]).slice(0, 8);
+                currentCharts.projChart = new Chart(ctx6, {
+                    type: 'bar',
+                    data: {
+                        labels: sortedProj.map(x => x[0]),
+                        datasets: [{
+                            label: 'Doanh thu (tỷ)',
+                            data: sortedProj.map(x => x[1]),
+                            backgroundColor: '#a121ce',
+                            borderRadius: 100
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { grid: { color: '#dee3e9' }, ticks: { color: '#5d6c7b' } },
+                            x: { grid: { display: false }, ticks: { color: '#5d6c7b', font: { size: 10 } } }
+                        }
+                    }
+                });
+            }
+
+            // 7. Delivery Plan Chart
+            const ctx7 = safeGetCtx('deliveryPlanChart');
+            if (ctx7) {
+                currentCharts.deliveryChart = new Chart(ctx7, {
+                    type: 'bar',
+                    data: {
+                        labels: DASHBOARD_DATA.deliveryPlan.map(d => d.NamThangBanGiao),
+                        datasets: [{
+                            label: 'Sản phẩm bàn giao',
+                            data: DASHBOARD_DATA.deliveryPlan.map(d => d.TongSoSanPham),
+                            backgroundColor: '#0064e0',
+                            borderRadius: 100
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { grid: { color: '#dee3e9' }, ticks: { color: '#5d6c7b' } },
+                            x: { grid: { display: false }, ticks: { color: '#5d6c7b' } }
+                        }
+                    }
+                });
+            }
+
+            // 8. Sales Revenue Chart
+            const ctx8 = safeGetCtx('salesRevenueChart');
+            if (ctx8) {
+                const topSales = DASHBOARD_DATA.salesPerformance.slice(0, 10);
+                currentCharts.salesRevChart = new Chart(ctx8, {
+                    type: 'bar',
+                    data: {
+                        labels: topSales.map(s => s.HoTen),
+                        datasets: [{
+                            label: 'Doanh thu (tỷ)',
+                            data: topSales.map(s => s.RevenueTyVND),
+                            backgroundColor: '#31a24c',
+                            borderRadius: 100
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { color: '#dee3e9' }, ticks: { color: '#5d6c7b' } },
+                            y: { grid: { display: false }, ticks: { color: '#5d6c7b' } }
+                        }
+                    }
+                });
+            }
+
+            // 9. Commission Role Chart
+            const ctx9 = safeGetCtx('commissionRoleChart');
+            if (ctx9) {
+                const roleComm = {};
+                DASHBOARD_DATA.salesPerformance.forEach(s => {
+                    roleComm[s.ChucVu] = (roleComm[s.ChucVu] || 0) + s.CommissionTrieuVND;
+                });
+                currentCharts.roleCommChart = new Chart(ctx9, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(roleComm),
+                        datasets: [{
+                            data: Object.values(roleComm),
+                            backgroundColor: ['#0064e0', '#1876f2', '#a121ce', '#f7b928'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { color: '#5d6c7b' } } }
+                    }
+                });
+            }
+
+            // 10. Price Type Chart
+            const ctx10 = safeGetCtx('priceTypeChart');
+            if (ctx10) {
+                const typePrices = {};
+                DASHBOARD_DATA.pricingData.forEach(p => {
+                    if (!typePrices[p.type]) typePrices[p.type] = [];
+                    typePrices[p.type].push(p.avgPrice);
+                });
+                const avgTypePrices = {};
+                for (let t in typePrices) {
+                    avgTypePrices[t] = typePrices[t].reduce((a, b) => a + b, 0) / typePrices[t].length;
+                }
+                currentCharts.priceTypeChart = new Chart(ctx10, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(avgTypePrices),
+                        datasets: [{
+                            label: 'Giá trung bình (tr/m²)',
+                            data: Object.values(avgTypePrices),
+                            backgroundColor: '#1876f2',
+                            borderRadius: 100
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { grid: { color: '#dee3e9' }, ticks: { color: '#5d6c7b' } },
+                            x: { grid: { display: false }, ticks: { color: '#5d6c7b' } }
+                        }
+                    }
+                });
+            }
+        }
+
+        window.onload = initDashboard;
+    </script>
+</body>
+
+</html>

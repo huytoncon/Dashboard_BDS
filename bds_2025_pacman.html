@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BDS 2025 — PAC-MAN EDITION</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2A3FE5;
+            --secondary: #F4B9B0; /* Pinky */
+            --success: #16A34A;   /* Green */
+            --warning: #D97706;   /* Orange */
+            --danger: #DC2626;    /* Red - Blinky */
+            --cyan: #00FFFF;      /* Inky */
+            --yellow: #FFFF00;    /* Pac-Man */
+            --surface: #000000;
+            --text: #FFFFFF;
+            --neutral: #333333;
+            --dot-color: #222222;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            image-rendering: pixelated;
+        }
+
+        body {
+            background-color: var(--surface);
+            color: var(--text);
+            font-family: 'Space Mono', monospace;
+            overflow-x: hidden;
+            line-height: 1.6;
+            background-image: radial-gradient(var(--dot-color) 2px, transparent 2px);
+            background-size: 32px 32px;
+        }
+
+        h1, h2, h3, .pixel-font {
+            font-family: 'Press Start 2P', cursive;
+            text-transform: uppercase;
+        }
+
+        /* ── HEADER ── */
+        .header {
+            border-bottom: 4px dotted var(--primary);
+            padding: 24px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            background: var(--yellow);
+            clip-path: polygon(100% 0%, 100% 100%, 0% 100%, 0% 0%, 50% 50%); /* Simple Pac-Man shape */
+            animation: chomp 0.3s infinite alternate;
+        }
+
+        @keyframes chomp {
+            from { clip-path: polygon(100% 0%, 100% 100%, 0% 100%, 0% 0%, 100% 50%); }
+            to { clip-path: polygon(100% 20%, 100% 80%, 0% 100%, 0% 0%, 50% 50%); }
+        }
+
+        .brand-text h1 {
+            font-size: 18px;
+            color: var(--yellow);
+            text-shadow: 4px 4px 0px var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+            border-radius: 50%;
+        }
+
+        /* ── NAV ── */
+        .tab-nav {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            padding: 24px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 4px solid var(--primary);
+            color: var(--primary);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.1s;
+            position: relative;
+        }
+
+        .tab-btn:hover, .tab-btn.active {
+            background: var(--primary);
+            color: var(--surface);
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid var(--primary);
+        }
+
+        /* ── MAIN CONTENT ── */
+        .main {
+            padding: 20px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page { display: none; }
+        .page.active { display: block; animation: scanline 0.2s linear infinite; }
+
+        /* ── KPI CARDS ── */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .kpi-card {
+            border: 4px solid var(--neutral);
+            padding: 24px;
+            position: relative;
+            background: rgba(0,0,0,0.8);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: -4px; left: -4px; right: -4px; bottom: -4px;
+            border: 4px dotted var(--neutral);
+            pointer-events: none;
+        }
+
+        .kpi-card:nth-child(1) { border-color: var(--danger); }
+        .kpi-card:nth-child(2) { border-color: var(--cyan); }
+        .kpi-card:nth-child(3) { border-color: var(--secondary); }
+        .kpi-card:nth-child(4) { border-color: var(--warning); }
+
+        .kpi-label {
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 16px;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .kpi-value {
+            font-size: 24px;
+            font-family: 'Press Start 2P', cursive;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .kpi-trend {
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .trend-up { color: var(--success); }
+        .trend-down { color: var(--danger); }
+
+        /* ── CHARTS & GRIDS ── */
+        .grid-main, .grid-equal, .grid-3 {
+            display: grid;
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+        .grid-main { grid-template-columns: 2fr 1fr; }
+        .grid-equal { grid-template-columns: 1fr 1fr; }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+
+        @media (max-width: 1024px) {
+            .grid-main, .grid-equal, .grid-3 { grid-template-columns: 1fr; }
+        }
+
+        .chart-box {
+            border: 4px solid var(--primary);
+            padding: 24px;
+            background: rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .chart-header {
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chart-title {
+            font-size: 12px;
+            color: var(--yellow);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chart-container {
+            height: 350px;
+            position: relative;
+        }
+
+        /* ── TABLES ── */
+        .table-wrap {
+            overflow-x: auto;
+            border: 4px solid var(--neutral);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface);
+        }
+
+        th {
+            background: var(--neutral);
+            color: var(--yellow);
+            padding: 16px;
+            text-align: left;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 9px;
+            border-bottom: 4px solid var(--primary);
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--neutral);
+            font-size: 12px;
+        }
+
+        tr:hover td {
+            background: rgba(42, 63, 229, 0.2);
+        }
+
+        /* ── UTILS ── */
+        .ghost-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background: currentColor;
+            clip-path: polygon(0% 100%, 0% 20%, 20% 0%, 80% 0%, 100% 20%, 100% 100%, 80% 80%, 60% 100%, 40% 80%, 20% 100%);
+        }
+
+        .progress-track {
+            height: 12px;
+            background: var(--neutral);
+            border: 2px solid var(--neutral);
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--yellow);
+            box-shadow: 0 0 10px var(--yellow);
+        }
+
+        /* ── FOOTER ── */
+        .footer {
+            text-align: center;
+            padding: 60px;
+            border-top: 4px dotted var(--primary);
+            color: #666;
+            font-size: 10px;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        /* ── SCANLINE EFFECT ── */
+        .page::after {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="brand">
+            <div class="logo"></div>
+            <div class="brand-text">
+                <h1>BDS 2025: ARCADE MODE</h1>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="status-dot"></div>
+                    <span style="font-size:10px; color:var(--success);">SYSTEM ONLINE</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <span style="font-size:10px; color:#888;" id="currentDate">READY PLAYER 1</span>
+        </div>
+    </header>
+
+    <nav class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('overview')">MAP 01: OVERVIEW</button>
+        <button class="tab-btn" onclick="switchTab('inventory')">MAP 02: INVENTORY</button>
+        <button class="tab-btn" onclick="switchTab('pricing')">MAP 03: PRICING</button>
+        <button class="tab-btn" onclick="switchTab('sales')">MAP 04: HIGH SCORES</button>
+    </nav>
+
+    <main class="main">
+        
+        <!-- PAGE: OVERVIEW -->
+        <div id="page-overview" class="page active">
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-label">TOTAL SCORE (REV)</div>
+                    <div class="kpi-value" id="kpi-revenue">0</div>
+                    <div class="kpi-trend trend-up">↑ BONUS!</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">DEALS CLEARED</div>
+                    <div class="kpi-value" id="kpi-deals">0</div>
+                    <div class="kpi-trend">STREAKING</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">AVG VALUE</div>
+                    <div class="kpi-value" id="kpi-avg-deal">0</div>
+                    <div class="kpi-trend">STEADY</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">WIN RATE</div>
+                    <div class="kpi-value" id="kpi-conversion">0%</div>
+                    <div class="kpi-trend trend-up">POWER UP!</div>
+                </div>
+            </div>
+
+            <div class="grid-main">
+                <div class="chart-box">
+                    <div class="chart-header"><div class="chart-title">LEVEL PROGRESS (MONTHLY TREND)</div></div>
+                    <div class="chart-container"><canvas id="revenueTrendChart"></canvas></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-header"><div class="chart-title">ENTITY TYPES</div></div>
+                    <div class="chart-container"><canvas id="propertyTypeChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="grid-equal">
+                <div class="chart-box">
+                    <div class="chart-header"><div class="chart-title">REALM DISTRIBUTION (PROVINCE)</div></div>
+                    <div class="chart-container"><canvas id="provinceRevenueChart"></canvas></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-header"><div class="chart-title">TOP QUESTS (PROJECTS)</div></div>
+                    <div class="chart-container"><canvas id="projectRevenueChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE: INVENTORY -->
+        <div id="page-inventory" class="page">
+            <div class="grid-3">
+                <div class="chart-box">
+                    <div class="chart-header"><div class="chart-title">STASH STATUS</div></div>
+                    <div class="chart-container"><canvas id="inventoryStatusChart"></canvas></div>
+                </div>
+                <div class="chart-box" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+                    <div class="pixel-font" style="font-size:40px; color:var(--yellow);">84%</div>
+                    <div class="pixel-font" style="font-size:10px; margin-top:20px;">BUILD PROGRESS</div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-header"><div class="chart-title">DELIVERY MAP</div></div>
+                    <div class="chart-container"><canvas id="deliveryPlanChart"></canvas></div>
+                </div>
+            </div>
+            <div class="chart-box" style="margin-top:32px;">
+                <div class="chart-header"><div class="chart-title">QUEST LOG: PROJECTS</div></div>
+                <div class="table-wrap">
+                    <table id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>PROJECT</th>
+                                <th>TYPE</th>
+                                <th>ZONE</th>
+                                <th>TOTAL</th>
+                                <th>SOLD</th>
+                                <th>EXP BAR</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE: PRICING -->
+        <div id="page-pricing" class="page">
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-label">AVG PRICE</div>
+                    <div class="kpi-value" id="pr-avg">0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">GROWTH YOY</div>
+                    <div class="kpi-value" style="color:var(--success);">+14.2%</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">TOP REALM</div>
+                    <div class="kpi-value" style="font-size:14px;">HCM CITY</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">EST. LOOT (PROFIT)</div>
+                    <div class="kpi-value">22%</div>
+                </div>
+            </div>
+            <div class="grid-equal">
+                <div class="chart-box">
+                    <div class="chart-header"><div class="chart-title">PRICE TIER BY TYPE</div></div>
+                    <div class="chart-container"><canvas id="priceTypeChart"></canvas></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-header"><div class="chart-title">MARKET VOLATILITY</div></div>
+                    <div class="chart-container"><canvas id="priceTrendChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE: SALES -->
+        <div id="page-sales" class="page">
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-label">MVP (TOP SALES)</div>
+                    <div class="kpi-value" id="top-sales-name" style="font-size:16px;">—</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">TOTAL LOOT PAID</div>
+                    <div class="kpi-value" id="total-commission">0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">ELITE SALES</div>
+                    <div class="kpi-value" id="excellent-sales-count">0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">TEAM SYNC</div>
+                    <div class="kpi-value">92%</div>
+                </div>
+            </div>
+            
+            <div class="grid-equal">
+                <div class="chart-box">
+                    <div class="chart-header"><div class="chart-title">TOP PERFORMANCE (TY)</div></div>
+                    <div class="chart-container"><canvas id="salesRevenueChart"></canvas></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-header"><div class="chart-title">CLASS LOOT SHARE</div></div>
+                    <div class="chart-container"><canvas id="commissionRoleChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="chart-box" style="margin-top:32px;">
+                <div class="chart-header"><div class="chart-title">HIGH SCORE LEADERBOARD</div></div>
+                <div class="table-wrap">
+                    <table id="salesTable">
+                        <thead>
+                            <tr>
+                                <th>PLAYER</th>
+                                <th>CLASS</th>
+                                <th>QUESTS</th>
+                                <th>LOOT (TY)</th>
+                                <th>COMMS (TR)</th>
+                                <th>POWER</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="footer">
+        INSERT COIN TO CONTINUE • © 2026 PHUC AN LAND • ARCADE ANALYTICS
+    </footer>
+
+    <script src="dashboard_data_2025.js"></script>
+    <script>
+        let currentCharts = {};
+        const PACMAN_COLORS = {
+            primary: '#2A3FE5',
+            red: '#DC2626',
+            pink: '#F4B9B0',
+            cyan: '#00FFFF',
+            orange: '#D97706',
+            yellow: '#FFFF00',
+            green: '#16A34A',
+            surface: '#000000',
+            text: '#FFFFFF'
+        };
+
+        Chart.defaults.font.family = "'Press Start 2P', cursive";
+        Chart.defaults.font.size = 8;
+        Chart.defaults.color = PACMAN_COLORS.text;
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('vi-VN').format(num);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('page-' + tabId).classList.add('active');
+            
+            // Fix: find the button manually if event is not passed
+            const btn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.textContent.includes(tabId.toUpperCase()));
+            if (btn) btn.classList.add('active');
+            
+            initCharts();
+        }
+
+        function initDashboard() {
+            // Check for DASHBOARD_DATA robustly
+            let data;
+            try {
+                data = DASHBOARD_DATA;
+            } catch (e) {
+                console.error("DASHBOARD_DATA is not defined!");
+                // Try to find it in window just in case
+                data = window.DASHBOARD_DATA;
+            }
+
+            if (!data) {
+                alert("ERROR: DASHBOARD_DATA NOT FOUND! Please run process_data_2025.py");
+                return;
+            }
+
+            // Stats
+            document.getElementById('kpi-revenue').textContent = formatNumber(data.summary.totalRevenue) + 'T';
+            document.getElementById('kpi-deals').textContent = formatNumber(data.summary.totalTransactions);
+            document.getElementById('kpi-avg-deal').textContent = data.summary.avgValue.toFixed(1) + 'T';
+            document.getElementById('kpi-conversion').textContent = '78%';
+
+            if (data.salesPerformance && data.salesPerformance.length > 0) {
+                const top = data.salesPerformance[0];
+                document.getElementById('top-sales-name').textContent = top.HoTen;
+                const totalComm = data.salesPerformance.reduce((s, p) => s + p.CommissionTrieuVND, 0);
+                document.getElementById('total-commission').textContent = formatNumber(Math.round(totalComm)) + 'M';
+                document.getElementById('excellent-sales-count').textContent = data.salesPerformance.filter(s => s.RevenueTyVND > 5).length;
+            }
+
+            if (data.monthlyTrend && data.monthlyTrend.length > 0) {
+                document.getElementById('pr-avg').textContent = data.monthlyTrend[data.monthlyTrend.length-1].AvgPrice + 'M';
+            }
+
+            renderTables(data);
+            initCharts();
+        }
+
+        function renderTables(data) {
+            if (data.productData) {
+                document.getElementById('inventoryTableBody').innerHTML = data.productData.slice(0, 15).map(p => `
+                    <tr>
+                        <td style="color:var(--yellow)">${p.project}</td>
+                        <td>${p.type}</td>
+                        <td>${p.province}</td>
+                        <td>${p.total}</td>
+                        <td>${p.sold}</td>
+                        <td>
+                            <div class="progress-track">
+                                <div class="progress-fill" style="width: ${p.total > 0 ? (p.sold/p.total)*100 : 0}%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            if (data.salesPerformance) {
+                document.getElementById('salesTableBody').innerHTML = data.salesPerformance.slice(0, 15).map(s => `
+                    <tr>
+                        <td style="color:var(--cyan)">${s.HoTen}</td>
+                        <td>${s.ChucVu}</td>
+                        <td>${s.Deals}</td>
+                        <td>${s.RevenueTyVND}</td>
+                        <td>${formatNumber(s.CommissionTrieuVND)}</td>
+                        <td>
+                            <div class="progress-track">
+                                <div class="progress-fill" style="width: ${Math.min(100, (s.RevenueTyVND/20)*100)}%; background:var(--primary)"></div>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function initCharts() {
+            let data;
+            try { data = DASHBOARD_DATA; } catch(e) { data = window.DASHBOARD_DATA; }
+            if (!data) return;
+
+            Object.values(currentCharts).forEach(c => { if(c) c.destroy(); });
+
+            const safeGetCtx = (id) => {
+                const el = document.getElementById(id);
+                return (el && el.offsetParent !== null) ? el.getContext('2d') : null;
+            };
+
+            // ── OVERVIEW CHARTS ──
+            const ctxRevTrend = safeGetCtx('revenueTrendChart');
+            if (ctxRevTrend) {
+                currentCharts.rev = new Chart(ctxRevTrend, {
+                    type: 'line',
+                    data: {
+                        labels: data.monthlyRevenue.map(m => m.NamThang),
+                        datasets: [{
+                            label: 'REVENUE (T)',
+                            data: data.monthlyRevenue.map(m => m.DoanhThuGhiNhanTyDong),
+                            borderColor: PACMAN_COLORS.yellow,
+                            borderWidth: 4,
+                            pointRadius: 4,
+                            stepped: true,
+                            backgroundColor: 'rgba(255, 255, 0, 0.1)',
+                            fill: true
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            const ctxType = safeGetCtx('propertyTypeChart');
+            if (ctxType) {
+                const sums = {};
+                data.typeRevenue.forEach(t => sums[t.LoaiBDS] = (sums[t.LoaiBDS] || 0) + t.DoanhThuGhiNhanTyDong);
+                currentCharts.type = new Chart(ctxType, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(sums),
+                        datasets: [{
+                            data: Object.values(sums),
+                            backgroundColor: [PACMAN_COLORS.red, PACMAN_COLORS.pink, PACMAN_COLORS.cyan, PACMAN_COLORS.orange, PACMAN_COLORS.primary],
+                            borderWidth: 4,
+                            borderColor: PACMAN_COLORS.surface
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                });
+            }
+
+            const ctxProv = safeGetCtx('provinceRevenueChart');
+            if (ctxProv) {
+                const provSums = {};
+                data.provinceRevenue.forEach(p => provSums[p.TinhThanh] = (provSums[p.TinhThanh] || 0) + p.DoanhThuGhiNhanTyDong);
+                currentCharts.prov = new Chart(ctxProv, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(provSums),
+                        datasets: [{
+                            label: 'TY VND',
+                            data: Object.values(provSums),
+                            backgroundColor: PACMAN_COLORS.primary,
+                            borderRadius: 0
+                        }]
+                    },
+                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            const ctxProj = safeGetCtx('projectRevenueChart');
+            if (ctxProj) {
+                const projSums = {};
+                data.projectRevenue.forEach(p => projSums[p.TenDuAn] = (projSums[p.TenDuAn] || 0) + p.DoanhThuGhiNhanTyDong);
+                const sorted = Object.entries(projSums).sort((a,b) => b[1] - a[1]).slice(0, 8);
+                currentCharts.proj = new Chart(ctxProj, {
+                    type: 'bar',
+                    data: {
+                        labels: sorted.map(x => x[0]),
+                        datasets: [{
+                            data: sorted.map(x => x[1]),
+                            backgroundColor: PACMAN_COLORS.secondary
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+            }
+
+            // ── INVENTORY CHARTS ──
+            const ctxInvStatus = safeGetCtx('inventoryStatusChart');
+            if (ctxInvStatus) {
+                const status = {
+                    'DONE': data.productData.reduce((s, p) => s + p.delivered, 0),
+                    'WORK': data.productData.reduce((s, p) => s + p.construction, 0),
+                    'WAIT': data.productData.reduce((s, p) => s + p.pending, 0)
+                };
+                currentCharts.inv = new Chart(ctxInvStatus, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(status),
+                        datasets: [{
+                            data: Object.values(status),
+                            backgroundColor: [PACMAN_COLORS.green, PACMAN_COLORS.primary, PACMAN_COLORS.orange],
+                            borderWidth: 4,
+                            borderColor: PACMAN_COLORS.surface
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                });
+            }
+
+            const ctxDeliv = safeGetCtx('deliveryPlanChart');
+            if (ctxDeliv) {
+                currentCharts.deliv = new Chart(ctxDeliv, {
+                    type: 'bar',
+                    data: {
+                        labels: data.deliveryPlan.map(d => d.NamThangBanGiao),
+                        datasets: [{
+                            label: 'UNITS',
+                            data: data.deliveryPlan.map(d => d.TongSoSanPham),
+                            backgroundColor: PACMAN_COLORS.red
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            // ── PRICING CHARTS ──
+            const ctxPriceType = safeGetCtx('priceTypeChart');
+            if (ctxPriceType) {
+                const typePrices = {};
+                data.pricingData.forEach(p => {
+                    if (!typePrices[p.type]) typePrices[p.type] = [];
+                    typePrices[p.type].push(p.avgPrice);
+                });
+                const labels = Object.keys(typePrices);
+                const values = labels.map(l => typePrices[l].reduce((a, b) => a + b, 0) / typePrices[l].length);
+                currentCharts.priceType = new Chart(ctxPriceType, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'M/M2',
+                            data: values,
+                            backgroundColor: PACMAN_COLORS.cyan
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            const ctxPriceTrend = safeGetCtx('priceTrendChart');
+            if (ctxPriceTrend) {
+                currentCharts.priceTrend = new Chart(ctxPriceTrend, {
+                    type: 'line',
+                    data: {
+                        labels: data.monthlyTrend.map(t => t.NamThang),
+                        datasets: [{
+                            label: 'MARKET',
+                            data: data.monthlyTrend.map(t => t.AvgPrice),
+                            borderColor: PACMAN_COLORS.cyan,
+                            borderWidth: 4,
+                            pointStyle: 'rectRot'
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            // ── SALES CHARTS ──
+            const ctxSalesRev = safeGetCtx('salesRevenueChart');
+            if (ctxSalesRev) {
+                const topSales = data.salesPerformance.slice(0, 10);
+                currentCharts.salesRev = new Chart(ctxSalesRev, {
+                    type: 'bar',
+                    data: {
+                        labels: topSales.map(s => s.HoTen),
+                        datasets: [{
+                            label: 'TY VND',
+                            data: topSales.map(s => s.RevenueTyVND),
+                            backgroundColor: PACMAN_COLORS.green
+                        }]
+                    },
+                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            const ctxComm = safeGetCtx('commissionRoleChart');
+            if (ctxComm) {
+                const roleComm = {};
+                data.salesPerformance.forEach(s => roleComm[s.ChucVu] = (roleComm[s.ChucVu] || 0) + s.CommissionTrieuVND);
+                currentCharts.comm = new Chart(ctxComm, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(roleComm),
+                        datasets: [{
+                            data: Object.values(roleComm),
+                            backgroundColor: [PACMAN_COLORS.primary, PACMAN_COLORS.cyan, PACMAN_COLORS.pink, PACMAN_COLORS.orange],
+                            borderWidth: 4,
+                            borderColor: PACMAN_COLORS.surface
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                });
+            }
+        }
+
+        window.onload = () => {
+            initDashboard();
+        };
+    </script>
+</body>
+</html>
