@@ -566,7 +566,7 @@
                 });
             }
 
-            // Inventory
+            // Inventory Status
             const ctxInv = safeGetCtx('inventoryStatusChart');
             if (ctxInv) {
                 const status = {
@@ -589,16 +589,81 @@
                 });
             }
 
+            // Delivery Plan
+            const ctxDeliv = safeGetCtx('deliveryPlanChart');
+            if (ctxDeliv) {
+                currentCharts.deliv = new Chart(ctxDeliv, {
+                    type: 'bar',
+                    data: {
+                        labels: data.deliveryPlan.map(d => d.NamThangBanGiao),
+                        datasets: [{
+                            label: 'UNITS',
+                            data: data.deliveryPlan.map(d => d.TongSoSanPham),
+                            backgroundColor: COMIC_COLORS.primary,
+                            borderColor: '#000',
+                            borderWidth: 3
+                        }]
+                    },
+                    options: chartOptions
+                });
+            }
+
+            // Price Type
+            const ctxPriceType = safeGetCtx('priceTypeChart');
+            if (ctxPriceType) {
+                const typePrices = {};
+                data.pricingData.forEach(p => {
+                    if (!typePrices[p.type]) typePrices[p.type] = [];
+                    typePrices[p.type].push(p.avgPrice);
+                });
+                const labels = Object.keys(typePrices);
+                const values = labels.map(l => typePrices[l].reduce((a, b) => a + b, 0) / typePrices[l].length);
+                currentCharts.priceType = new Chart(ctxPriceType, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'M/M2',
+                            data: values,
+                            backgroundColor: COMIC_COLORS.accent,
+                            borderColor: '#000',
+                            borderWidth: 3
+                        }]
+                    },
+                    options: chartOptions
+                });
+            }
+
+            // Price Trend
+            const ctxPriceTrend = safeGetCtx('priceTrendChart');
+            if (ctxPriceTrend) {
+                currentCharts.priceTrend = new Chart(ctxPriceTrend, {
+                    type: 'line',
+                    data: {
+                        labels: data.monthlyTrend.map(t => t.NamThang),
+                        datasets: [{
+                            label: 'MARKET',
+                            data: data.monthlyTrend.map(t => t.AvgPrice),
+                            borderColor: '#000',
+                            backgroundColor: 'rgba(46, 196, 255, 0.2)',
+                            borderWidth: 4,
+                            fill: true
+                        }]
+                    },
+                    options: chartOptions
+                });
+            }
+
             // Sales Rev
             const ctxSales = safeGetCtx('salesRevenueChart');
             if (ctxSales) {
-                const topSales = data.salesPerformance.slice(0, 8);
+                const topSales = data.salesPerformance.slice(0, 10);
                 currentCharts.sales = new Chart(ctxSales, {
                     type: 'bar',
                     data: {
                         labels: topSales.map(s => s.HoTen),
                         datasets: [{
-                            label: 'TY',
+                            label: 'TY VND',
                             data: topSales.map(s => s.RevenueTyVND),
                             backgroundColor: COMIC_COLORS.primary,
                             borderColor: '#000',
@@ -606,6 +671,26 @@
                         }]
                     },
                     options: { ...chartOptions, indexAxis: 'y' }
+                });
+            }
+
+            // Commission Share
+            const ctxComm = safeGetCtx('commissionRoleChart');
+            if (ctxComm) {
+                const roleComm = {};
+                data.salesPerformance.forEach(s => roleComm[s.ChucVu] = (roleComm[s.ChucVu] || 0) + s.CommissionTrieuVND);
+                currentCharts.comm = new Chart(ctxComm, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(roleComm),
+                        datasets: [{
+                            data: Object.values(roleComm),
+                            backgroundColor: [COMIC_COLORS.primary, COMIC_COLORS.accent, COMIC_COLORS.secondary, '#16A34A'],
+                            borderColor: '#000',
+                            borderWidth: 3
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
                 });
             }
         }
