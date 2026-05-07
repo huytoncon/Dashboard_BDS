@@ -65,14 +65,22 @@
         .logo {
             width: 48px;
             height: 48px;
-            background: var(--yellow);
-            clip-path: polygon(100% 0%, 100% 100%, 0% 100%, 0% 0%, 50% 50%); /* Simple Pac-Man shape */
-            animation: chomp 0.3s infinite alternate;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        @keyframes chomp {
-            from { clip-path: polygon(100% 0%, 100% 100%, 0% 100%, 0% 0%, 100% 50%); }
-            to { clip-path: polygon(100% 20%, 100% 80%, 0% 100%, 0% 0%, 50% 50%); }
+        .pacman-svg {
+            width: 100%;
+            height: 100%;
+            fill: var(--yellow);
+            animation: chomp-svg 0.3s steps(2) infinite;
+        }
+
+        @keyframes chomp-svg {
+            0% { clip-path: polygon(100% 0, 100% 100%, 0 100%, 0 0); }
+            50% { clip-path: polygon(100% 25%, 50% 50%, 100% 75%, 100% 100%, 0 100%, 0 0, 100% 0); }
         }
 
         .brand-text h1 {
@@ -317,7 +325,11 @@
 
     <header class="header">
         <div class="brand">
-            <div class="logo"></div>
+            <div class="logo">
+                <svg class="pacman-svg" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="50" />
+                </svg>
+            </div>
             <div class="brand-text">
                 <h1>BDS 2025: ARCADE MODE</h1>
                 <div style="display:flex; align-items:center; gap:8px;">
