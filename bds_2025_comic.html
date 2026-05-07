@@ -332,6 +332,28 @@
 
         <!-- PAGE: PRICING -->
         <div id="page-pricing" class="page" style="display:none;">
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-label">AVG PRICE</div>
+                    <div class="kpi-value" id="pr-avg">0</div>
+                    <div class="bubble">THE MARKET VALUE!</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">GROWTH YOY</div>
+                    <div class="kpi-value" id="pr-growth">+14.2%</div>
+                    <div class="bubble">UP! UP! AND AWAY!</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">TOP REALM</div>
+                    <div class="kpi-value" id="pr-top-area" style="font-size:24px;">HCM CITY</div>
+                    <div class="bubble">THE CORE SECTOR!</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">EST. PROFIT</div>
+                    <div class="kpi-value" id="pr-profit">22%</div>
+                    <div class="bubble">RICH REWARDS!</div>
+                </div>
+            </div>
             <div class="grid-2">
                 <div class="chart-panel">
                     <div class="chart-title">PRICE POWER BY TYPE</div>
@@ -342,10 +364,50 @@
                     <div class="chart-container"><canvas id="priceTrendChart"></canvas></div>
                 </div>
             </div>
+            <div class="table-panel" style="margin-top:32px;">
+                <div class="comic-font" style="background:var(--outline); color:white; padding:10px;">PRICING LOG: VALUATION DATA</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>PROJECT</th>
+                            <th>TYPE</th>
+                            <th>PRICE (M/M2)</th>
+                            <th>MIN-MAX</th>
+                            <th>AREA</th>
+                            <th>GOLD (TY)</th>
+                            <th>GROWTH</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pricingTableBody"></tbody>
+                </table>
+            </div>
         </div>
 
         <!-- PAGE: SALES -->
         <div id="page-sales" class="page" style="display:none;">
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-label">MVP (TOP SALES)</div>
+                    <div class="kpi-value" id="top-sales-name" style="font-size:20px;">—</div>
+                    <div class="bubble" id="top-sales-val">0 tỷ</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">TOTAL LOOT PAID</div>
+                    <div class="kpi-value" id="total-commission">0</div>
+                    <div class="bubble">THE HERO'S SHARE!</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">ELITE SALES</div>
+                    <div class="kpi-value" id="excellent-sales-count">0</div>
+                    <div class="bubble">THE ELITE SQUAD!</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">TEAM SYNC</div>
+                    <div class="kpi-value">92%</div>
+                    <div class="bubble">PERFECT SYNERGY!</div>
+                </div>
+            </div>
+            
             <div class="grid-2">
                 <div class="chart-panel">
                     <div class="chart-title">TOP HEROES (REV)</div>
@@ -356,7 +418,7 @@
                     <div class="chart-container"><canvas id="commissionRoleChart"></canvas></div>
                 </div>
             </div>
-            <div class="table-panel">
+            <div class="table-panel" style="margin-top:32px;">
                 <table>
                     <thead>
                         <tr>
@@ -364,6 +426,7 @@
                             <th>CLASS</th>
                             <th>QUESTS</th>
                             <th>GOLD (TY)</th>
+                            <th>LOOT (TR)</th>
                             <th>POWER</th>
                         </tr>
                     </thead>
@@ -420,16 +483,33 @@
             document.getElementById('kpi-deals').textContent = formatNumber(data.summary.totalTransactions);
             document.getElementById('kpi-avg-deal').textContent = data.summary.avgValue.toFixed(1) + 'T';
 
+            // Pricing KPIs
+            if (data.monthlyTrend && data.monthlyTrend.length > 0) {
+                document.getElementById('pr-avg').textContent = data.monthlyTrend[data.monthlyTrend.length-1].AvgPrice + 'M';
+            }
+
+            // Sales KPIs
+            if (data.salesPerformance && data.salesPerformance.length > 0) {
+                const top = data.salesPerformance[0];
+                document.getElementById('top-sales-name').textContent = top.HoTen;
+                document.getElementById('top-sales-val').textContent = top.RevenueTyVND + ' tỷ';
+                
+                const totalComm = data.salesPerformance.reduce((s, p) => s + p.CommissionTrieuVND, 0);
+                document.getElementById('total-commission').textContent = formatNumber(Math.round(totalComm)) + 'M';
+                document.getElementById('excellent-sales-count').textContent = data.salesPerformance.filter(s => s.RevenueTyVND > 5).length;
+            }
+
             renderTables(data);
             initCharts();
         }
 
         function renderTables(data) {
             if (data.productData) {
-                document.getElementById('inventoryTableBody').innerHTML = data.productData.slice(0, 10).map(p => `
+                document.getElementById('inventoryTableBody').innerHTML = data.productData.slice(0, 15).map(p => `
                     <tr>
                         <td class="comic-font" style="color:var(--primary)">${p.project}</td>
                         <td>${p.type}</td>
+                        <td style="font-size:11px;">${p.province}</td>
                         <td>${p.total}</td>
                         <td>${p.sold}</td>
                         <td>
@@ -441,13 +521,28 @@
                 `).join('');
             }
 
+            if (data.pricingData) {
+                document.getElementById('pricingTableBody').innerHTML = data.pricingData.slice(0, 15).map(p => `
+                    <tr>
+                        <td class="comic-font" style="color:var(--primary)">${p.project}</td>
+                        <td>${p.type}</td>
+                        <td>${p.avgPrice}</td>
+                        <td style="font-size:10px;">${p.minPrice}-${p.maxPrice}</td>
+                        <td>${p.avgArea}m²</td>
+                        <td>${p.avgValue}T</td>
+                        <td style="color:var(--success)">+${p.growth}%</td>
+                    </tr>
+                `).join('');
+            }
+
             if (data.salesPerformance) {
-                document.getElementById('salesTableBody').innerHTML = data.salesPerformance.slice(0, 10).map(s => `
+                document.getElementById('salesTableBody').innerHTML = data.salesPerformance.slice(0, 15).map(s => `
                     <tr>
                         <td class="comic-font" style="color:var(--accent)">${s.HoTen}</td>
                         <td>${s.ChucVu}</td>
                         <td>${s.Deals}</td>
                         <td>${s.RevenueTyVND}</td>
+                        <td>${formatNumber(s.CommissionTrieuVND)}</td>
                         <td>
                             <div style="height:10px; background:#eee; border:2px solid #000;">
                                 <div style="height:100%; width:${Math.min(100, (s.RevenueTyVND/20)*100)}%; background:var(--primary);"></div>
